@@ -790,7 +790,7 @@ def plot_actual_production_chart(hourly_df, target_per_hour):
 # ============================================================
 # SIDEBAR — narrow icon bar + controls
 # ============================================================
-# Logo
+# Logo + nav icons only
 st.sidebar.markdown("""
 <div class="sidebar-logo">
     <svg viewBox="0 0 125 100" width="48" height="38" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;">
@@ -800,85 +800,44 @@ st.sidebar.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Navigation icons
-nav_items = [
-    ("📊", "Dashboard", True),
-    ("📋", "Reports",  False),
-    ("⚙️", "Settings", False),
-]
-for icon, label, active in nav_items:
-    cls = "sidebar-icon active" if active else "sidebar-icon"
-    st.sidebar.markdown(f"""<div class="{cls}">{icon}<div>{label}</div></div>""", unsafe_allow_html=True)
-
-st.sidebar.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
-
-# Controls (collapsed below icons)
-selected_date = st.sidebar.date_input("📅 Date", value=datetime.now(), label_visibility="collapsed")
-date_str = selected_date.strftime("%Y-%m-%d")
-
-use_demo = st.sidebar.checkbox("Demo", value=False, label_visibility="collapsed")
-if use_demo:
-    st.sidebar.caption("📊 DEMO")
-
-auto_refresh = st.sidebar.checkbox("🔄 Refresh", value=False, label_visibility="collapsed")
-refresh_interval = 30
-if auto_refresh:
-    refresh_interval = st.sidebar.selectbox("Interval", [10,20,30,60], index=2, label_visibility="collapsed")
-
-tv_mode = st.sidebar.checkbox("📺 TV", value=False, label_visibility="collapsed")
-if tv_mode:
-    st.sidebar.caption("📺 TV MODE")
+for icon, label, active in [("📊","Dashboard",True),("📋","Reports",False),("⚙️","Settings",False)]:
+    st.sidebar.markdown(f"""<div class="sidebar-icon{' active' if active else ''}">{icon}<div>{label}</div></div>""", unsafe_allow_html=True)
 
 st.sidebar.markdown("""
-<div style="position:fixed;bottom:10px;width:56px;text-align:center;font-size:0.5rem;color:#475569;font-family:'JetBrains Mono',monospace;letter-spacing:0.04em;">
+<div style="position:fixed;bottom:10px;width:56px;text-align:center;font-size:0.5rem;color:#475569;font-family:'JetBrains Mono',monospace;">
     akY v2
 </div>
 """, unsafe_allow_html=True)
 
+# ============================================================
+# Init session state for toolbar widgets (defined later in layout)
+today_str = datetime.now().strftime("%Y-%m-%d")
+if "toolbar_date" not in st.session_state:
+    st.session_state.toolbar_date = today_str
+if "toolbar_demo" not in st.session_state:
+    st.session_state.toolbar_demo = False
+if "toolbar_autorefresh" not in st.session_state:
+    st.session_state.toolbar_autorefresh = False
+if "toolbar_tv" not in st.session_state:
+    st.session_state.toolbar_tv = False
 
-# ============================================================
-# AUTO-REFRESH FUNCTIONALITY
-# ============================================================
-if auto_refresh:
-    # Import streamlit-autorefresh if available, otherwise use a simple approach
-    try:
-        from streamlit_autorefresh import st_autorefresh
-        # Apply auto-refresh with the selected interval
-        count = st_autorefresh(
-            interval=refresh_interval * 1000,  # Convert seconds to milliseconds
-            key="datarefresh"
-        )
-        # Show refresh status
-        st.sidebar.caption(f"🔄 Auto-refresh enabled ({refresh_interval}s) - Refresh #{count}")
-    except ImportError:
-        # Fallback if streamlit-autorefresh is not installed
-        st.sidebar.warning("🔧 Install 'streamlit-autorefresh' for auto-refresh functionality")
-        # Simple JavaScript-based refresh as fallback
-        st.markdown(f"""
-        <script>
-            setTimeout(function(){{
-                window.location.reload();
-            }}, {refresh_interval * 1000});
-        </script>
-        """, unsafe_allow_html=True)
-        st.sidebar.caption(f"🔄 Auto-refresh enabled ({refresh_interval}s) - using JS fallback")
+date_str = st.session_state.toolbar_date
+use_demo = st.session_state.toolbar_demo
+auto_refresh = st.session_state.toolbar_autorefresh
+tv_mode = st.session_state.toolbar_tv
+refresh_interval = 300  # 5 min
 
-
-# ============================================================
-# DATA RETRIEVAL & PROCESSING
-# ============================================================
 if use_demo:
     df = get_demo_data()
-    st.sidebar.info("📊 Prikazuju se DEMO podaci")
 else:
     df = get_data_from_db(date_str)
     if df.empty:
-        st.sidebar.warning(f"Nema podataka za {date_str}.")
-        use_demo_fallback = st.sidebar.checkbox("Prebaci na Demo", value=True)
+        st.warning(f"Nema podataka za {date_str}.")
+        use_demo_fallback = st.checkbox("Prebaci na Demo", value=True)
         if use_demo_fallback:
             df = get_demo_data()
         else:
-            st.error("Nema zapisa za izabrani datum. Odaberite drugi datum.")
+            st.error("Nema zapisa za izabrani datum.")
             st.stop()
 
 # Samo jedna linija — NIS SMT Line
@@ -952,23 +911,54 @@ if tv_mode:
 # LOGO + HEADER
 # ============================
 st.markdown(f"""
-<div style="text-align:center;padding:4px 0 0 0;">
-    <svg viewBox="0 0 125 100" width="100" height="80" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;">
+<div style="text-align:center;padding:0;">
+    <svg viewBox="0 0 125 100" width="80" height="64" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;">
         <path d="M 0 0 L 25 0 L 75 50 L 25 100 L 0 100 L 0 75 L 25 75 L 50 50 L 25 25 L 0 25 Z" fill="#00a69c"/>
         <path d="M 67.5 32.5 L 80 45 L 100 25 L 125 25 L 125 0 L 100 0 Z" fill="#e6007e"/>
     </svg>
 </div>
-<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 4px 12px 4px;">
-    <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:1.5rem;font-weight:800;color:#E0E6ED;letter-spacing:0.06em;">akYtec NIS SMT Line</span>
-        <span style="font-size:0.6rem;background:rgba(0,229,255,0.08);color:#00E5FF;padding:2px 10px;border-radius:8px;font-weight:600;letter-spacing:0.06em;">{date_str}</span>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px 6px 4px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:1.3rem;font-weight:800;color:#E0E6ED;letter-spacing:0.04em;">akYtec NIS SMT Line</span>
+        <span style="font-size:0.55rem;background:rgba(0,229,255,0.08);color:#00E5FF;padding:2px 8px;border-radius:8px;font-weight:600;">{date_str}</span>
     </div>
-    <div style="display:flex;align-items:center;gap:16px;">
-        <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#6B7280;">SHIFT 08:00 – 16:00</span>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:#00E5FF;font-weight:600;">NIS SMT Line</span>
+    <div style="display:flex;align-items:center;gap:14px;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#6B7280;">SHIFT 08:00 – 16:00</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#00E5FF;font-weight:600;">NIS SMT Line</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
+
+# ============================
+# TOOLBAR — minimalist controls
+# ============================
+tool_cols = st.columns([1.2, 0.7, 0.7, 0.7, 0.7, 2])
+with tool_cols[0]:
+    date_options = [(datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(13, -1, -1)]
+    date_idx = next((i for i, d in enumerate(date_options) if d == date_str), len(date_options)-1)
+    st.selectbox("", date_options, index=date_idx, key="toolbar_date", label_visibility="collapsed")
+with tool_cols[1]:
+    if st.button("⟳", help="Refresh now", use_container_width=True):
+        st.cache_data.clear()
+        st.rerun()
+with tool_cols[2]:
+    st.checkbox("Auto", key="toolbar_autorefresh", help="Auto-refresh every 5 min")
+with tool_cols[3]:
+    st.checkbox("Demo", key="toolbar_demo", help="Use demo data")
+with tool_cols[4]:
+    tv_mode =     st.checkbox("TV", key="toolbar_tv", help="TV / Fullscreen mode")
+
+# Auto-refresh logic
+if auto_refresh:
+    try:
+        from streamlit_autorefresh import st_autorefresh
+        st_autorefresh(interval=refresh_interval * 1000, key="dashrefresh")
+    except ImportError:
+        st.markdown(f"<script>setTimeout(function(){{window.location.reload()}},{refresh_interval*1000})</script>", unsafe_allow_html=True)
+        st.caption("⟳ JS fallback")
+
+if use_demo:
+    st.caption("📊 Demo data")
 
 # ============================
 # ROW 1 — 4 Small KPI cards (Today + Monthly) with colored accents
