@@ -1,0 +1,17 @@
+<svg width="200" height="80" viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Teal Chevron (left) -->
+  <g id="teal-chevron">
+    <path d="M 60 20 L 80 40 L 60 60" stroke="#00BCD4" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  
+  <!-- Magenta Chevron (right, overlapping) -->
+  <g id="magenta-chevron">
+    <path d="M 75 20 L 95 40 L 75 60" stroke="#FF1493" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  
+  <!-- Text "ak" -->
+  <text x="10" y="55" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#1C1C1C">ak</text>
+  
+  <!-- Text "tec" -->
+  <text x="110" y="55" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="#1C1C1C">tec</text>
+</svg>
